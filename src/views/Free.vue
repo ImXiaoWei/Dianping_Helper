@@ -7,20 +7,37 @@
 
 		<!-- 电脑端 UI -->
 		<div class="mobile-form" v-if="this.deviceType === 'pc'">
-			<el-table :data="freeList" stripe style="width: 100%" v-loading="loading" element-loading-text="加载中" height="700">
-				<el-table-column prop="title" label="标题">
+			<el-drawer title="报名列表" :visible.sync="drawer" direction="rtl" size="35%">
+				<iframe
+					:src="'https://m.dianping.com/mobile/dinendish/apply/'+item.offlineActivityId+'?a=1&source=null&utm_source=517bwcxq0507'"
+					v-for="(item,index) in freeList" :key="index" scrolling="no" frameborder="0" height="170">
+				</iframe>
+			</el-drawer>
+			<el-button type="danger" @click="drawer = true">一键报名</el-button>
+
+			<el-table :data="freeList" stripe style="width: 100%" v-show="showTable" v-loading="loading"
+				element-loading-text="加载中" height="700">
+				<el-table-column prop="title" label="标题" width="500">
 				</el-table-column>
-				<el-table-column prop="type" label="类型">
+				<el-table-column prop="type" label="类型" width="100">
 				</el-table-column>
-				<el-table-column prop="regionName" label="地区">
+				<el-table-column prop="regionName" label="地区" width="200">
 				</el-table-column>
-				<el-table-column prop="userWinCount" label="中奖人数">
+				<el-table-column label="中奖人数" width="100">
+					<template slot-scope="scope">
+						{{scope.row.userWinCount + "人"}}
+					</template>
 				</el-table-column>
-				<el-table-column prop="applyCount" label="报名人数">
+				<el-table-column label="报名人数" width="100">
+					<template slot-scope="scope">
+						{{scope.row.applyCount + "人"}}
+					</template>
 				</el-table-column>
 				<el-table-column label="操作">
 					<template slot-scope="scope">
-						<el-button type="primary" size="mini">立即报名</el-button>
+						<el-button type="primary" size="mini"
+							@click="getFreeDetail(scope.row.offlineActivityId,scope.row.title,'simple')">立即报名
+						</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -33,9 +50,6 @@
 				</el-col>
 			</el-row>
 		</div>
-
-		<!-- <iframe src="https://m.dianping.com/mobile/dinendish/apply/2092152428?a=1&source=null&utm_source=517bwcxq0507"
-			frameborder="0" scrolling="no" sandbox='allow-scripts allow-same-origin'></iframe> -->
 	</div>
 </template>
 
@@ -43,10 +57,13 @@
 	export default {
 		data() {
 			return {
-				freeList: [],
-				page: 1,
-				deviceType: '',
-				loading: true
+				freeList: [], //免费试列表
+				page: 1, //当前页码
+				deviceType: '', //设备类型
+				loading: true, //是否加载中
+				showTable: true, //表格显示
+				freeDetailUrl: '', //免费试URL
+				drawer: false
 			}
 		},
 		methods: {
@@ -80,26 +97,51 @@
 					})
 				this.freeList = res.data.lotteryActivityList
 				this.loading = false
-				console.log(this.freeList);
-				//console.log(res.data.lotteryActivityList);
 			},
-			
+			async getFreeDetail(id, name, mode) {
+				const {
+					data: res
+				} = await this.$http.get(
+					'/mapi/astro-plat/freemeal/bwcDetailPackage', {
+						params: {
+							offlineActivityId: id
+						},
+					})
+				this.freeDetailUrl = res.data.bwcData.applyURL
+				if (mode == "simple") {
+					this.openFreeDetail(name)
+				}
+
+			},
+
 			/* 请求总页码 */
 
 			/* 电脑端方法 */
+			/* 上一页 */
 			prevPage() {
 				this.freeList = []
 				this.page--
 				this.getFreeList(this.page)
 			},
+			/* 下一页 */
 			nextPage() {
 				this.freeList = []
 				this.page++
 				this.getFreeList(this.page)
 			},
+			/* 选择页数 */
 			currPage(val) {
 				this.freeList = []
 				this.getFreeList(val)
+			},
+			// 打开详情窗口
+			openFreeDetail(name) {
+				this.$alert('<iframe src=' + this.freeDetailUrl + ' height="170" scrolling="no" frameborder="0"></iframe>',
+					name, {
+						dangerouslyUseHTMLString: true,
+						center: true
+					});
+
 			}
 		},
 		created() {
@@ -117,4 +159,33 @@
 </script>
 
 <style>
+	.time {
+		font-size: 13px;
+		color: #999;
+	}
+
+	.bottom {
+		margin-top: 13px;
+		line-height: 12px;
+	}
+
+	.button {
+		padding: 0;
+		float: right;
+	}
+
+	.image {
+		width: 100%;
+		display: block;
+	}
+
+	.clearfix:before,
+	.clearfix:after {
+		display: table;
+		content: "";
+	}
+
+	.clearfix:after {
+		clear: both
+	}
 </style>
