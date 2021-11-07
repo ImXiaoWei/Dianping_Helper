@@ -5,24 +5,17 @@
 		<div v-show="false" v-html="detailDom" ref="mydetailDom"></div>
 		<!-- 移动端 UI -->
 		<div class="mobile-form" v-if="this.deviceType === 'mobile'">
-
+			
+			<!-- 回到顶部 -->
+			<el-backtop style="margin-bottom: 30px"></el-backtop>
+			
 			<!-- 详情窗口 -->
 			<van-action-sheet v-model="buttonShow" :title="mobileShopName">
 				<div class="bottomContent" v-html="buttonIframe"></div>
 			</van-action-sheet>
 
-			<!-- 登录窗口 -->
-			<van-dialog v-model="loginShow">
-				<div class="bottomContent">
-					<iframe height="500" scrolling="no" frameborder="0"
-						src="https://maccount.dianping.com/login"></iframe>
-				</div>
-			</van-dialog>
-
-
-
 			<!-- 顶部组件 -->
-			<van-nav-bar title="团购列表" fixed :placeholder='true' left-text="登录" @click-left="mobileLogin">
+			<van-nav-bar title="团购列表" fixed :placeholder='true'>
 				<template #right>
 					<!-- 位置选择窗口 -->
 					<van-popover v-model="showPopover" trigger="click" :actions="cities" @select="positionChange"
@@ -34,6 +27,7 @@
 					</van-popover>
 				</template>
 			</van-nav-bar>
+			
 			<!-- 搜索框 -->
 			<van-row type="flex" justify="center" align="center">
 				<van-col span="18">
@@ -45,6 +39,7 @@
 					</van-checkbox>
 				</van-col>
 			</van-row>
+			
 			<!-- 快速选择 -->
 			<div class="quickSearch">
 				<van-tag color="#F7F8FA" text-color="#C8C9CC" size="large" @click="quickSearch('2人')">两人餐</van-tag>
@@ -57,6 +52,7 @@
 				&nbsp;
 			</div>
 			<br>
+			
 			<!-- 列表 -->
 			<van-list v-model="loading" :finished="finished" finished-text="没有更多了" @load="onLoad">
 				<van-collapse v-model="activeNames">
@@ -90,8 +86,10 @@
 
 		<!-- 电脑端 UI -->
 		<div class="mobile-form" v-if="this.deviceType === 'pc'">
+			
 			<!-- 功能区 -->
 			<el-row type="flex" class="row-bg">
+				
 				<!-- 搜索框 -->
 				<el-col :span="6">
 					<el-input placeholder="请输入内容" v-model="searchTxt" @keyup.enter.native="search"
@@ -99,6 +97,7 @@
 						<el-button slot="append" icon="el-icon-search" @click="search"></el-button>
 					</el-input>
 				</el-col>
+				
 				<!-- 分页 -->
 				<el-col :span="6">
 					&nbsp;
@@ -226,7 +225,6 @@
 				finished: false, //是否完成全部加载
 				activeNames: ['1'], //折叠面板最大折叠数
 				buttonShow: false, //详情窗口显示
-				loginShow: false, //登录窗口显示
 				buttonIframe: '', //详情窗口URL
 				loginIframe: '', //登录窗口URL
 				mobileShopName: '', //详情窗口标题
@@ -284,15 +282,6 @@
 				this.showAggrList()
 				//console.log(res);
 			},
-
-			/* 请求详情 */
-			// async getDetail(id) {
-			// 	const {
-			// 		data: res
-			// 	} = await this.$http.get('/mapi/tuan/deal/moreinfo/698958498')
-			// 	//this.detailDom = res
-			// 	//console.log(res);
-			// },
 
 			/* 添加列表数组 */
 			showAggrList() {
@@ -497,10 +486,6 @@
 				this.buttonShow = true
 				this.buttonIframe = "<iframe src='https://m.dianping.com/tuan/deal/" + id +
 					"' height='2800' frameborder='0' scrolling='no'></iframe>"
-			},
-			/* 登录界面显示 */
-			mobileLogin() {
-				this.loginShow = true
 			},
 			/* 快速搜索 */
 			quickSearch(keyword) {
