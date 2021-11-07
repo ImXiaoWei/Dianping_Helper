@@ -68,7 +68,8 @@
 								sandbox='allow-scripts allow-same-origin'></iframe>
 						</van-grid-item>
 					</van-grid>
-					<van-button color="#FF6633" block square @click="nextLoad()" ref="nextBtn">下一页</van-button>
+					<van-button color="#FF6633" block square @click="nextLoad()" ref="nextBtn"
+						v-show="finished == false">下一页</van-button>
 				</van-tab>
 			</van-tabs>
 		</div>
@@ -189,7 +190,6 @@
 						//结果为0时完成全部加载
 						this.finished = true
 						this.$toast.fail('无更多数据')
-						this.$refs.nextBtn.style.display = "none"
 						return
 					}
 					this.freeList = this.freeList.concat(res.data.lotteryActivityList)
@@ -267,10 +267,9 @@
 			},
 			/* 切换标签 */
 			changeTab() {
-				this.$refs.nextBtn.style.display = "block" //初始化下一页按钮
 				this.finished = false //初始化加载
-				this.page = 1
 				this.freeList = []
+				this.page = 1
 				this.getFreeList(this.page)
 			}
 		},
