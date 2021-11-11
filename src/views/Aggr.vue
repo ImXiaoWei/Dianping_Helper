@@ -5,10 +5,10 @@
 		<div v-show="false" v-html="detailDom" ref="mydetailDom"></div>
 		<!-- 移动端 UI -->
 		<div class="mobile-form" v-if="this.deviceType === 'mobile'">
-			
+
 			<!-- 回到顶部 -->
 			<el-backtop style="margin-bottom: 30px"></el-backtop>
-			
+
 			<!-- 详情窗口 -->
 			<van-action-sheet v-model="buttonShow" :title="mobileShopName">
 				<div class="bottomContent" v-html="buttonIframe"></div>
@@ -27,7 +27,7 @@
 					</van-popover>
 				</template>
 			</van-nav-bar>
-			
+
 			<!-- 搜索框 -->
 			<van-row type="flex" justify="center" align="center">
 				<van-col span="18">
@@ -39,7 +39,7 @@
 					</van-checkbox>
 				</van-col>
 			</van-row>
-			
+
 			<!-- 快速选择 -->
 			<div class="quickSearch">
 				<van-tag color="#F7F8FA" text-color="#C8C9CC" size="large" @click="quickSearch('2人')">两人餐</van-tag>
@@ -52,7 +52,7 @@
 				&nbsp;
 			</div>
 			<br>
-			
+
 			<!-- 列表 -->
 			<van-list v-model="loading" :finished="finished" finished-text="没有更多了" @load="onLoad">
 				<van-collapse v-model="activeNames">
@@ -86,10 +86,10 @@
 
 		<!-- 电脑端 UI -->
 		<div class="mobile-form" v-if="this.deviceType === 'pc'">
-			
+
 			<!-- 功能区 -->
 			<el-row type="flex" class="row-bg">
-				
+
 				<!-- 搜索框 -->
 				<el-col :span="6">
 					<el-input placeholder="请输入内容" v-model="searchTxt" @keyup.enter.native="search"
@@ -97,7 +97,7 @@
 						<el-button slot="append" icon="el-icon-search" @click="search"></el-button>
 					</el-input>
 				</el-col>
-				
+
 				<!-- 分页 -->
 				<el-col :span="6">
 					&nbsp;
@@ -264,9 +264,9 @@
 				return flag;
 			},
 
-
 			/* 请求列表 */
 			async getAggrList(page, keyword) {
+				this.finished = false
 				const {
 					data: res
 				} = await this.$http.get(
@@ -280,7 +280,8 @@
 					})
 				this.listDom = res //将获取的数据赋予临时 DOM
 				this.showAggrList()
-				//console.log(res);
+				//console.log(res)
+				console.log("Keyword:" + this.keyword + "  Page:" + this.page + "  Sec:" + this.onlySec);
 			},
 
 			/* 添加列表数组 */
@@ -345,14 +346,23 @@
 							this.aggrList.push(obj) //将对象加入数组
 						}
 					}
-					this.loading = false //结束加载
 
-					if (this.aggrList.length < 10) {
+					//秒杀模式下若当前列表数据不足10条时自动加载下一页
+					if (this.aggrList.length < 10 && this.onlySec == true) {
+						this.loading = true
 						this.page++
 						this.getAggrList(this.page, this.keyword)
 						return
 					}
-					//设定最大加载页数
+
+					//秒杀模式下仅显示现价20元以内团购
+					if (this.onlySec == true && this.aggrList[this.aggrList.length - 1].price > 20) {
+						this.finished = true
+						this.$toast.fail('秒杀模式不显示￥20以上团购')
+						return
+					}
+
+					//设定查询的最大加载页数
 					if (this.deviceType === 'mobile' && this.page > 65) {
 						this.finished = true
 						this.$toast.fail('无法显示更多')
@@ -363,6 +373,7 @@
 					if (this.$refs.myListDom.querySelectorAll("a").length == 0) {
 						if (this.deviceType === 'mobile') {
 							//手机端提示
+							this.finished = true
 							this.$toast.fail('已全部加载')
 						} else {
 							//电脑端提示
@@ -373,8 +384,8 @@
 							});
 						}
 					}
+					this.loading = false //结束加载
 				}, 10);
-
 			},
 			/* 标签颜色 */
 			tagColor(val) {
@@ -391,6 +402,24 @@
 			},
 			/* 搜索 */
 			search() {
+				if (this.searchTxt == "562691320") {
+					if (this.$cookies.get("vip") == "true") {
+						this.$dialog.alert({
+							message: '您已解锁过会员，无需重复解锁！',
+						}).then(() => {
+
+						});
+					} else {
+						this.$cookies.set("vip", "true", "7d")
+						this.$dialog.alert({
+							message: '已成功解锁会员！',
+						}).then(() => {
+
+						});
+					}
+					return
+				}
+				this.onlySec = false
 				this.aggrList = [] //清空团购数组
 				this.keyword = this.searchTxt //将搜索框内的值赋予关键词
 				this.page = 0 //重置当前页码
@@ -489,6 +518,7 @@
 			},
 			/* 快速搜索 */
 			quickSearch(keyword) {
+				this.onlySec = false
 				this.aggrList = []
 				this.page = 0
 				this.keyword = keyword
@@ -496,11 +526,21 @@
 			},
 			/* 切换只看秒杀 */
 			changeSec(val) {
-				if (val == true) {
-					this.$toast('正在查询秒杀 请稍候')
+				if (this.onlySec == true && this.$cookies.get("vip") != "true") {
+					//若为普通用户
+					this.$dialog.alert({
+						message: '抱歉，本功能仅限会员专属',
+					}).then(() => {
+						this.onlySec = false
+					})
+				} else if (this.$cookies.get("vip") == "true") {
+					//若为会员
+					if (val == true) {
+						this.$toast('正在查询秒杀 请稍候')
+					}
+					this.aggrList = []
+					this.getAggrList(this.page, this.keyword)
 				}
-				this.aggrList = []
-				this.getAggrList(this.page, this.keyword)
 			}
 		},
 		created() {
